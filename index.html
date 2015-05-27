@@ -1,0 +1,282 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>hanoi 4 towers</title>
+        <script src="phaser.min.js"></script>
+    </head>
+    <body>
+
+    <script type="text/javascript">
+
+    window.onload = function() {
+
+        var game =
+            new Phaser.Game
+            (
+                800, 400,
+                Phaser.AUTO,
+                '',
+                { preload: preload, create: create }
+            );
+
+        var moves = 0;
+        var moves_text;
+
+        var NUM_DISKS = 6;
+
+        var stack =
+        [
+            [6, 5, 4, 3, 2, 1],
+            [],
+            [],
+            []
+        ];
+
+        var disks = [];
+
+        function mouseToStick( pointer )
+        {
+            return Math.floor( pointer.x/200 );
+        }
+
+
+        function getDiskNum ( disk )
+        {
+
+            diskNum = 
+            {
+                'disk1' : 1,
+                'disk2' : 2,
+                'disk3' : 3,
+                'disk4' : 4,
+                'disk5' : 5,
+                'disk6' : 6,
+            };
+
+            return diskNum[disk];
+
+        }
+
+        function getTopOfStack ( num )
+        {
+
+            return stack[num][ stack[num].length-1 ];
+
+        }
+
+        function preload () {
+
+            game.load.image('background', 'img/background.png')
+            game.load.image('stick', 'img/stick.png');
+
+            game.load.image('disk1', 'img/disk1.png');
+            game.load.image('disk2', 'img/disk2.png');
+            game.load.image('disk3', 'img/disk3.png');
+            game.load.image('disk4', 'img/disk4.png');
+            game.load.image('disk5', 'img/disk5.png');
+            game.load.image('disk6', 'img/disk6.png');
+
+            game.load.image('button', 'img/restart.png');
+
+        }
+
+        function create () {
+
+            var background = game.add.sprite(0, 0, 'background');
+
+            var stick1 = game.add.sprite(85, 100, 'stick');
+            var stick2 = game.add.sprite(285, 100, 'stick');
+            var stick3 = game.add.sprite(485, 100, 'stick');
+            var stick4 = game.add.sprite(685, 100, 'stick');
+
+            disks[6] = game.add.sprite(100, 400-20-0*40, 'disk6');
+            disks[6].anchor.setTo(0.5, 0.5);
+
+            disks[5] = game.add.sprite(100, 400-20-1*40, 'disk5');
+            disks[5].anchor.setTo(0.5, 0.5);
+
+            disks[4] = game.add.sprite(100, 400-20-2*40, 'disk4');
+            disks[4].anchor.setTo(0.5, 0.5);
+
+            disks[3] = game.add.sprite(100, 400-20-3*40, 'disk3');
+            disks[3].anchor.setTo(0.5, 0.5);
+
+            disks[2] = game.add.sprite(100, 400-20-4*40, 'disk2');
+            disks[2].anchor.setTo(0.5, 0.5);
+
+            disks[1] = game.add.sprite(100, 400-20-5*40, 'disk1');
+            disks[1].anchor.setTo(0.5, 0.5);
+
+            disks[1].inputEnabled = true;
+            disks[1].input.enableDrag();
+            disks[1].events.onDragStart.add( onDragStart, this );
+            disks[1].events.onDragStop.add( onDragStop, this );
+
+            // moves marker
+            var style = {font: "50px Arial"}
+            moves_text = game.add.text(0, 0, moves.toString(), style);
+
+            // restart button
+            game.add.button( 315, 10, 'button', restart, this );
+
+
+        }
+
+        function restart()
+        {
+            
+            moves = 0;
+            moves_text.text = moves.toString();
+
+            stack =
+            [
+                [6, 5, 4, 3, 2, 1],
+                [],
+                [],
+                []
+            ];
+
+            disks[6].x = 100;
+            disks[5].x = 100;
+            disks[4].x = 100;
+            disks[3].x = 100;
+            disks[2].x = 100;
+            disks[1].x = 100;
+
+            disks[6].y = 400-20-0*40;
+            disks[5].y = 400-20-1*40;
+            disks[4].y = 400-20-2*40;
+            disks[3].y = 400-20-3*40;
+            disks[2].y = 400-20-4*40;
+            disks[1].y = 400-20-5*40;
+
+            disks[6].inputEnabled = false;
+            disks[5].inputEnabled = false;
+            disks[4].inputEnabled = false;
+            disks[3].inputEnabled = false;
+            disks[2].inputEnabled = false;
+            disks[1].inputEnabled = true;
+
+        }
+
+        function onDragStart( sprite, pointer )
+        {
+
+            var stick = mouseToStick( pointer );
+            var disk = getTopOfStack( stick );
+
+            // if the disk is droped in a wrong place
+            // we must put it back where it was
+            prevStack = stick; 
+
+        }
+
+        function onDragStop( sprite, pointer )
+        {
+            
+            var stick = mouseToStick( pointer );
+
+            var prevTopOri = getTopOfStack( prevStack );
+            var prevTopDest = getTopOfStack( stick );
+
+            // already there
+            if( stick == prevStack )
+            {
+
+                sprite.x = 100 + prevStack*200;
+                sprite.y = 400 - 20 - (stack[prevStack].length-1)*40;
+
+            }
+
+            // empty stack
+            else if( prevTopDest == null )
+            {
+
+                // place the disk
+                sprite.x = 100 + stick*200;
+                sprite.y = 400 - 20 - 0*40;
+
+                // remove from the prev stack
+                var disk = stack[prevStack].pop();
+
+                // set dragable the new top
+                var newTop = getTopOfStack( prevStack );
+                if( newTop != null )
+                {
+
+                    disks[newTop].inputEnabled = true;
+                    disks[newTop].input.enableDrag();
+                    disks[newTop].events.onDragStart.add( onDragStart, this );
+                    disks[newTop].events.onDragStop.add( onDragStop, this );
+
+                }
+
+                // insert in the dest stack
+                stack[stick].push( disk );
+
+                // inc moves and display
+                moves++;
+                moves_text.text = moves.toString();
+
+
+            }
+
+            // can put
+            else if( prevTopDest > getTopOfStack( prevStack ) )
+            {
+
+                // place the disk
+                sprite.x = 100 + stick*200;
+                sprite.y = 400 - 20 - stack[stick].length*40;
+
+                // remove from the prev stack
+                var disk = stack[prevStack].pop();
+
+                // set dragable the new top
+                var newTop = getTopOfStack( prevStack );
+                if( newTop != null )
+                {
+
+                    disks[newTop].inputEnabled = true;
+                    disks[newTop].input.enableDrag();
+                    disks[newTop].events.onDragStart.add( onDragStart, this );
+                    disks[newTop].events.onDragStop.add( onDragStop, this );
+
+                }
+
+                // set not dragable last top
+                disks[prevTopDest].inputEnabled = false;
+
+                // insert in the dest stack
+                stack[stick].push( disk );
+
+                // inc moves and display
+                moves++;
+                moves_text.text = moves.toString();
+                
+
+            }
+
+            // can not put
+            else
+            {
+
+                sprite.x = 100 + prevStack*200;
+                sprite.y = 400 - 20 - (stack[prevStack].length-1)*40;
+
+            }
+
+            if( stack[stack.length-1].length == NUM_DISKS )
+            {
+                moves_text.text = "You win!";
+            }
+
+        }
+
+    };
+
+    </script>
+
+    </body>
+</html>
